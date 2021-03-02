@@ -34,8 +34,8 @@ export function getMessageFromError(errData, status) {
 }
 
 function getJSON(url, options = {}) {
-  const { query = null, ...init } = options;
-  init.credentials = 'same-origin';
+  const {query = null, ...init} = options;
+  init.credentials = 'include';
   const queryStr = query ? `?${queryString.stringify(query)}` : '';
   return fetch(`${url}${queryStr}`, init).then(response => {
     if (response.status < 400) {
@@ -71,26 +71,45 @@ function getJSON(url, options = {}) {
   });
 }
 
-export const DEFAULT_API_ROOT = prefixUrl('/api/');
+function getApiUrl() {
+  const location = window.location;
+
+  const subdomain = location.host.split('.')[0];
+  let origin;
+
+  if (subdomain === 'jaeger') {
+    origin = `${location.protocol}//${location.host.replace('app', 'api')}`;
+  } else if (subdomain === 'jaeger-dev' || subdomain === 'dev') {
+    origin = `${location.protocol}//${location.host.replace(subdomain, 'api-dev')}`;
+  }
+
+  if (origin) {
+    return `${origin}/api/`;
+  }
+
+  return prefixUrl('/api/');
+}
+
+export const DEFAULT_API_ROOT = getApiUrl();
 export const ANALYTICS_ROOT = prefixUrl('/analytics/');
 export const DEFAULT_DEPENDENCY_LOOKBACK = moment.duration(1, 'weeks').asMilliseconds();
 
 const JaegerAPI = {
   apiRoot: DEFAULT_API_ROOT,
   archiveTrace(id) {
-    return getJSON(`${this.apiRoot}archive/${id}`, { method: 'POST' });
+    return getJSON(`${this.apiRoot}archive/${id}`, {method: 'POST'});
   },
   fetchDecoration(url) {
     return getJSON(url);
   },
   fetchDeepDependencyGraph(query) {
-    return getJSON(`${ANALYTICS_ROOT}v1/dependencies`, { query });
+    return getJSON(`${ANALYTICS_ROOT}v1/dependencies`, {query});
   },
   fetchDependencies(endTs = new Date().getTime(), lookback = DEFAULT_DEPENDENCY_LOOKBACK) {
-    return getJSON(`${this.apiRoot}dependencies`, { query: { endTs, lookback } });
+    return getJSON(`${this.apiRoot}dependencies`, {query: {endTs, lookback}});
   },
   fetchQualityMetrics(service, hours) {
-    return getJSON(`/qualitymetrics-v2`, { query: { hours, service } });
+    return getJSON(`/qualitymetrics-v2`, {query: {hours, service}});
   },
   fetchServiceOperations(serviceName) {
     return getJSON(`${this.apiRoot}services/${encodeURIComponent(serviceName)}/operations`);
@@ -110,7 +129,7 @@ const JaegerAPI = {
     return getJSON(`${this.apiRoot}traces/${id}`);
   },
   searchTraces(query) {
-    return getJSON(`${this.apiRoot}traces`, { query });
+    return getJSON(`${this.apiRoot}traces`, {query});
   },
 };
 
