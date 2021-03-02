@@ -35,7 +35,7 @@ import JaegerAPI, {
 } from './jaeger';
 
 const defaultOptions = {
-  credentials: 'same-origin',
+  credentials: 'include',
 };
 
 describe('archiveTrace', () => {
