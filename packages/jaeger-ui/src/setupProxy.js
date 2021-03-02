@@ -18,7 +18,7 @@ const proxy = require('http-proxy-middleware');
 module.exports = function setupProxy(app) {
   app.use(
     proxy('/api', {
-      target: 'http://localhost:16686',
+      target: 'http://localhost:3004',
       logLevel: 'silent',
       secure: false,
       changeOrigin: true,
